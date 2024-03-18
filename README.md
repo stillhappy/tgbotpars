@@ -26,4 +26,4 @@ This Telegram bot is designed to help users easily access and analyze betting od
 4. Obtain a Telegram Bot token from the BotFather and add it to the configuration
 5. Run the bot and start parsing those odds!
 
-Made with by [stillhappy]
+Made with by [stillhappy](https://github.com/stillhappy)
