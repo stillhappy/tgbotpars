@@ -30,8 +30,8 @@ def plot_coefficients(data, match: str, bk: str, game: str, difference: float):
 
 
     # Создание двух линий на графике
-    trace1 = go.Scatter(x=dates, y=coef1, mode='lines+markers', name=name1, line_shape='spline', line_smoothing=1.3, line_color='red')
-    trace2 = go.Scatter(x=dates, y=coef2, mode='lines+markers', name=name2, line_shape='spline', line_smoothing=1.3, line_color='green')
+    trace1 = go.Scatter(x=dates, y=coef1, mode='lines+markers', name=name1, line_color='red', line_shape='linear')
+    trace2 = go.Scatter(x=dates, y=coef2, mode='lines+markers', name=name2, line_color='green', line_shape='linear')
     fig.add_trace(trace1)
     fig.add_trace(trace2)
 
@@ -72,3 +72,4 @@ def get_data_for_graph():
 
 if __name__ == '__main__':
     get_data_for_graph()
+
