@@ -3,12 +3,15 @@ from aiogram.types import Message, CallbackQuery
 from lexicon.lexicon import LEXICON_RU
 from aiogram.filters import Command
 from keyboards.settings_kb import create_users_keyboard
-from bd.tg_users_bd import get_status_users, get_admin, give_pass, del_pass
+from bd.tg_admin_bd import get_status_users, get_admin, give_pass, del_pass, update_pass
+
+
 router = Router()
 
 @router.message(Command(commands='users'))
-async def send_echo(message: Message, db_host, db_database, db_user, db_password, db_port):
+async def send_pass_users(message: Message, db_host, db_database, db_user, db_password, db_port):
     if get_admin(message.from_user.id, db_host, db_database, db_user, db_password, db_port):
+        update_pass(db_host, db_database, db_user, db_password, db_port)
         await message.answer(
             text=LEXICON_RU[message.text],
             reply_markup=create_users_keyboard(get_status_users(db_host, db_database, db_user, db_password, db_port))

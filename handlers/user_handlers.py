@@ -1,101 +1,165 @@
-from aiogram import F, Router
-from aiogram.filters import Command, CommandStart
-from aiogram.types import CallbackQuery, Message
+from aiogram import Router, F
+from aiogram.types import Message, CallbackQuery
 from lexicon.lexicon import LEXICON_RU
-from keyboards.settings_kb import create_settings_keyboard, create_edit_keyboard, create_kb_params, create_kb_edit_params, edit_kb_edit_params_add, edit_kb_edit_params_del, edit_kb_edit_params_pro
-from bd.tg_users_bd import get_users, get_status_pass, get_info_settings, edit_params_del, edit_params_add, edit_params_pro
+from aiogram.filters import Command
+from keyboards.zamki_kb import create_locks_games_keyboard, create_tours_keyboard, create_matches_keyboard, create_params_keyboard, create_locks_all_keyboard, create_locks_keyboard
+from bd.tg_pass_bd import get_tours_from_game, get_matches_from_game, get_params_from_game, get_locks_all_from_game, get_full_name_tour, get_pass
+from lexicon.dictsl import d_params_to_en, d_en_to_params, d_games_to_s, d_s_to_games
 
-# Инициализируем роутер уровня модуля
 router = Router()
 
-@router.message(CommandStart())
-async def process_start_command(message: Message, db_host, db_database, db_user, db_password, db_port, admin_ids):
-    await message.answer(text=LEXICON_RU['/start'])
-    get_users(message, db_host, db_database, db_user, db_password, admin_ids, db_port)
+@router.message(Command(commands='locks'))
+async def send_locks_menu(message: Message, db_host, db_database, db_user, db_password, db_port):
+    if get_pass(message.from_user.id, db_host, db_database, db_user, db_password, db_port):
+        await message.answer(
+            text=LEXICON_RU[message.text],
+            reply_markup=create_locks_keyboard()
+        )
+    else:
+        await message.answer(
+            text=LEXICON_RU['/pass'][0]
+        )
 
-@router.message(Command(commands='help'))
-async def process_help_command(message: Message):
-    await message.answer(text=LEXICON_RU['/help'])
-
-@router.message(Command(commands='pass'))
-async def process_help_command(message: Message, db_host, db_database, db_user, db_password, db_port):
-    await message.answer(text=LEXICON_RU['/pass'][get_status_pass(message, db_host, db_database, db_user, db_password, db_port)])
-
-@router.message(Command(commands='settings'))
-async def process_settings_command(message: Message):
-    await message.answer(
-        text=LEXICON_RU[message.text],
-        reply_markup=create_settings_keyboard()
-    )
-
-@router.callback_query(F.data == 'cancel')
-async def process_cancel_press(callback: CallbackQuery):
-    await callback.message.edit_text(text=LEXICON_RU['cancel_text'])
+@router.callback_query(F.data == 'cancel_zam')
+async def process_cancel_press_from_locks(callback: CallbackQuery):
+    await callback.message.edit_text(text=LEXICON_RU['cancel_zam'])
     await callback.answer()
 
-@router.callback_query(F.data.in_(['games', 'bookies', 'progruz']))
-async def process_settings_param(callback: CallbackQuery, db_host, db_database, db_user, db_password, db_port):
+@router.callback_query(F.data.in_(['live', 'line']))
+async def games_locks(callback: CallbackQuery):
     await callback.message.edit_text(
-        text=LEXICON_RU[callback.data],
-        reply_markup=create_kb_params(get_info_settings(callback.from_user.id, callback.data, db_host, db_database, db_user, db_password, db_port))
+        text=f'<b>Вы перешли в раздел {callback.data}</b>\nВыберите игру:',
+        reply_markup=create_locks_games_keyboard(callback.data)
     )
+    await callback.answer()
 
-
-@router.callback_query(F.data == 'back')
-async def process_settings_back(callback: CallbackQuery):
+@router.callback_query(F.data == 'back_cat')
+async def process_back_to_live_line(callback: CallbackQuery):
     await callback.message.edit_text(
-        text=LEXICON_RU['/settings'],
-        reply_markup=create_settings_keyboard()
+        text=LEXICON_RU['/locks'],
+        reply_markup=create_locks_keyboard()
     )
     await callback.answer()
 
-@router.callback_query(F.data == 'edit_settings')
-async def process_edit_press(callback: CallbackQuery):
+@router.callback_query(F.data.endswith('_gams'))
+async def tours_locks(callback: CallbackQuery, db_host, db_database, db_user, db_password, db_port):
+    data = callback.data.split('_')
+    status, game = data[1], data[0]
+    if game in d_s_to_games:
+        game = d_s_to_games[game]
     await callback.message.edit_text(
-        text=LEXICON_RU[callback.data],
-        reply_markup=create_edit_keyboard()
+        text=f'<b>Вы перешли в игру {game}</b>\nВыберите турнир:',
+        reply_markup=create_tours_keyboard(game, status, get_tours_from_game(game, status, db_host, db_database, db_user, db_password, db_port))
     )
     await callback.answer()
 
-@router.callback_query(F.data.in_(['edit_games', 'edit_bookies', 'edit_progruz']))
-async def process_settings_param(callback: CallbackQuery, db_host, db_database, db_user, db_password, db_port):
+@router.callback_query(F.data.endswith('_gama'))
+async def process_back_to_games(callback: CallbackQuery):
     await callback.message.edit_text(
-        text=LEXICON_RU[callback.data],
-        reply_markup=create_kb_edit_params(callback.data, get_info_settings(callback.from_user.id, callback.data.lstrip('edit_'), db_host, db_database, db_user, db_password, db_port))
+        text=f'<b>Вы перешли в раздел {callback.data.split('_')[1]}</b>\nВыберите игру:',
+        reply_markup=create_locks_games_keyboard(callback.data.split('_')[1])
     )
+    await callback.answer()
 
-@router.callback_query(F.data == 'back_edit')
-async def process_settings_back(callback: CallbackQuery):
+@router.callback_query(F.data.endswith('_tor'))
+async def matches_locks(callback: CallbackQuery, db_host, db_database, db_user, db_password, db_port):
+    if get_pass(callback.from_user.id, db_host, db_database, db_user, db_password, db_port):
+        data = callback.data.split('_')
+        status, game, tour = data[1], data[0], data[2]
+        tour = get_full_name_tour(tour, db_host, db_database, db_user, db_password, db_port)
+        game = d_s_to_games[game]
+        await callback.message.edit_text(
+            text=f'<b>Вы перешли в турнир {tour}</b>\nВыберите матч:',
+            reply_markup=create_matches_keyboard(game, status, tour,
+                                                 get_matches_from_game(status, game, tour, db_host, db_database,
+                                                                       db_user, db_password, db_port))
+        )
+        await callback.answer()
+    else:
+        await callback.message.edit_text(
+            text=LEXICON_RU['/pass'][0]
+        )
+        await callback.answer()
+    # Counter-Strike.live.H2H CS.toar
+
+@router.callback_query(F.data.endswith('_toura'))
+async def process_back_to_tours(callback: CallbackQuery, db_host, db_database, db_user, db_password, db_port):
+    data = callback.data.split('_')
+    status, game, tour = data[2], data[1], data[3]
+    tour = get_full_name_tour(tour, db_host, db_database, db_user, db_password, db_port)
+    game = d_s_to_games[game]
     await callback.message.edit_text(
-        text=LEXICON_RU['edit_settings'],
-        reply_markup=create_edit_keyboard()
+        text=f'<b>Вы перешли в игру {game}</b>\nВыберите турнир:',
+        reply_markup=create_tours_keyboard(game, status, get_tours_from_game(game, status, db_host, db_database, db_user, db_password, db_port))
     )
     await callback.answer()
 
-@router.callback_query(F.data.in_(['1x_1', 'fonbet_1', 'cloudbet_1', 'csgopositive_1', 'raybet_1', 'tf_1',
-                                   'counter-strike_1', 'dota2_1', 'lol_1', 'valorant_1']))
-async def process_settings_param(callback: CallbackQuery, db_host, db_database, db_user, db_password, db_port):
-    await callback.message.edit_reply_markup(reply_markup=edit_kb_edit_params_del(callback))
-    edit_params_del(callback.from_user.id, callback.data, db_host, db_database, db_user, db_password, db_port)
+@router.callback_query(F.data.endswith('_mch'))
+async def params_lock(callback: CallbackQuery, db_host, db_database, db_user, db_password, db_port):
+    data = callback.data.split('_')
+    game, status, tour, match = data[0], data[1], data[2], data[3]
+    tour = get_full_name_tour(tour, db_host, db_database, db_user, db_password, db_port)
+    game = d_s_to_games[game]
+    await callback.message.edit_text(
+        text=f'<b>Вы перешли в матч {' - '.join(data[3].split('|'))}</b>\nВыберите маркер:',
+        reply_markup=create_params_keyboard(game, status, tour, match,
+                                             get_params_from_game(status, game, tour, match, db_host, db_database, db_user,
+                                                                   db_password, db_port))
+    )
     await callback.answer()
 
-@router.callback_query(F.data.in_(['1x_0', 'fonbet_0', 'cloudbet_0', 'csgopositive_0', 'raybet_0', 'tf_0',
-                                   'counter-strike_0', 'dota2_0', 'lol_0', 'valorant_0']))
-async def process_settings_param(callback: CallbackQuery, db_host, db_database, db_user, db_password, db_port):
-    await callback.message.edit_reply_markup(reply_markup=edit_kb_edit_params_add(callback))
-    edit_params_add(callback.from_user.id, callback.data, db_host, db_database, db_user, db_password, db_port)
+@router.callback_query(F.data.endswith('_mha'))
+async def process_back_to_matches(callback: CallbackQuery, db_host, db_database, db_user, db_password, db_port):
+    if get_pass(callback.from_user.id, db_host, db_database, db_user, db_password, db_port):
+        data = callback.data.split('_')
+        status, game, tour = data[2], data[1], data[3]
+        tour = get_full_name_tour(tour, db_host, db_database, db_user, db_password, db_port)
+        game = d_s_to_games[game]
+        await callback.message.edit_text(
+            text=f'<b>Вы перешли в турнир {tour}</b>\nВыберите матч:',
+            reply_markup=create_matches_keyboard(game, status, tour,
+                                                 get_matches_from_game(status, game, tour, db_host, db_database,
+                                                                       db_user, db_password, db_port))
+        )
+        await callback.answer()
+    else:
+        await callback.message.edit_text(
+            text=LEXICON_RU['/pass'][0]
+        )
+        await callback.answer()
+    # cs.live.H2H CS.Blue Gem |Dragon Ri.Map1.prm
+
+@router.callback_query(F.data.endswith('prm'))
+async def locks_all(callback: CallbackQuery, db_host, db_database, db_user, db_password, db_port):
+    data = callback.data.split('_')
+    status, game, tour, match, param = data[1], data[0], data[2], data[3], data[4]
+    tour = get_full_name_tour(tour, db_host, db_database, db_user, db_password, db_port)
+    game = d_s_to_games[game]
+    param = d_en_to_params[param]
+    await callback.message.edit_text(
+        text=f'<b>Вы перешли в матч {' - '.join(data[3].split('|'))}</b>\nМаркер: <b>{d_en_to_params[data[4]]}</b>',
+        reply_markup=create_locks_all_keyboard(get_locks_all_from_game(status, game, tour, match, param, db_host, db_database,
+                                                                 db_user,
+                                                                 db_password, db_port))
+    )
     await callback.answer()
 
-@router.callback_query(F.data.in_(['0.05_0', '0.1_0', '0.15_0', '0.2_0', '0.25_0', '0.3_0']))
-async def process_settings_param(callback: CallbackQuery, db_host, db_database, db_user, db_password, db_port):
-    await callback.message.edit_reply_markup(reply_markup=edit_kb_edit_params_pro(callback))
-    edit_params_pro(callback.from_user.id, callback.data, db_host, db_database, db_user, db_password, db_port)
+@router.callback_query(F.data=='clpls')
+async def ans_pust(callback: CallbackQuery):
     await callback.answer()
 
-@router.callback_query(F.data.in_(['1x', 'fonbet', 'cloudbet', 'csgopositive', 'raybet', 'tf',
-                                   'counter-strike', 'dota2', 'lol', 'valorant', '0.05_1', '0.1_1', '0.15_1',
-                                   '0.05', '0.1', '0.15', '0.2_1', '0.25_1', '0.3_1', '0.2', '0.25', '0.3']))
-async def process_settings_param(callback: CallbackQuery):
+@router.callback_query(F.data.endswith('pra'))
+async def process_back_to_params(callback: CallbackQuery, db_host, db_database, db_user, db_password, db_port):
+    data = callback.data.split('_')
+    game, status, tour, match = data[1], data[2], data[3], data[4]
+    tour = get_full_name_tour(tour, db_host, db_database, db_user, db_password, db_port)
+    game = d_s_to_games[game]
+    # back = f'back.{dict[back_list[1]]}.{back_list[0]}.{back_list[2][:9]}.{back_list[3][:9]}|{back_list[4][:9]}.pra'
+    await callback.message.edit_text(
+        text=f'<b>Вы перешли в матч {' - '.join(data[4].split('|'))}</b>\nВыберите маркер:',
+        reply_markup=create_params_keyboard(game, status, tour, match,
+                                            get_params_from_game(status, game, tour, match, db_host, db_database,
+                                                                 db_user,
+                                                                 db_password, db_port))
+    )
     await callback.answer()
-
-

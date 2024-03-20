@@ -1,4 +1,5 @@
 import psycopg2
+from datetime import datetime, timedelta
 
 def get_users(message, db_host, db_database, db_user, db_password, admin_ids, db_port):
     conn = psycopg2.connect(
@@ -135,22 +136,6 @@ def edit_params_pro(user_id, old_par: str, db_host, db_database, db_user, db_pas
     cur.close()
     conn.close()
 
-def get_status_users(db_host, db_database, db_user, db_password, db_port):
-    conn = psycopg2.connect(
-        host=db_host,
-        database=db_database,
-        user=db_user,
-        password=db_password,
-        port=db_port
-    )
-    conn.autocommit = True
-    cur = conn.cursor()
-    cur.execute(f"SELECT user_id, username, first_name, is_pass FROM tg_users")
-    pass_users = cur.fetchall()
-    cur.close()
-    conn.close()
-    return pass_users
-
 def get_pass_users_with_settings(db_host, db_database, db_user, db_password, db_port):
     conn = psycopg2.connect(
         host=db_host,
@@ -161,54 +146,9 @@ def get_pass_users_with_settings(db_host, db_database, db_user, db_password, db_
     )
     conn.autocommit = True
     cur = conn.cursor()
-    cur.execute(f"SELECT user_id, games, bookies, progruz FROM tg_users WHERE is_pass is true")
+    cur.execute(f"SELECT user_id, games, bookies, progruz, date_end_pass, username, first_name FROM tg_users WHERE is_pass is true")
     pass_users = cur.fetchall()
     cur.close()
     conn.close()
     return pass_users
 
-def get_admin(user_id, db_host, db_database, db_user, db_password, db_port):
-    conn = psycopg2.connect(
-        host=db_host,
-        database=db_database,
-        user=db_user,
-        password=db_password,
-        port=db_port
-    )
-    conn.autocommit = True
-    cur = conn.cursor()
-    cur.execute(f"SELECT is_admin FROM tg_users WHERE user_id = {user_id}")
-    adm = cur.fetchone()[0]
-    cur.close()
-    conn.close()
-    return adm
-
-def give_pass(user_id: str, db_host, db_database, db_user, db_password, db_port):
-    user_id = user_id.rstrip(':0')
-    conn = psycopg2.connect(
-        host=db_host,
-        database=db_database,
-        user=db_user,
-        password=db_password,
-        port=db_port
-    )
-    conn.autocommit = True
-    cur = conn.cursor()
-    cur.execute(f"UPDATE tg_users SET is_pass = true WHERE user_id = {user_id}")
-    cur.close()
-    conn.close()
-
-def del_pass(user_id: str, db_host, db_database, db_user, db_password, db_port):
-    user_id = user_id.rstrip(':1')
-    conn = psycopg2.connect(
-        host=db_host,
-        database=db_database,
-        user=db_user,
-        password=db_password,
-        port=db_port
-    )
-    conn.autocommit = True
-    cur = conn.cursor()
-    cur.execute(f"UPDATE tg_users SET is_pass = false WHERE user_id = {user_id}")
-    cur.close()
-    conn.close()
