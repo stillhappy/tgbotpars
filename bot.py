@@ -6,9 +6,10 @@ import time
 from aiogram import Bot, Dispatcher
 from config_data.config import Config, load_config
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler
-from handlers import other_handlers, user_handlers, admin_handlers
+from handlers import user_handlers, pass_handlers, admin_handlers, other_handlers
 from keyboards.main_menu import set_main_menu
 from services.auto_posting import scheduled_messaging
+from middlewares.inner import AdminMiddleware, SubscriptionMiddleware
 
 # Инициализируем логгер
 logger = logging.getLogger(__name__)
@@ -39,10 +40,20 @@ async def main():
                              'db_password': config.db.db_password,
                              'db_port': config.db.db_port,
                              'admin_ids': config.tg_bot.admin_ids})
+    subscription_middleware = SubscriptionMiddleware()
+    admin_middleware = AdminMiddleware()
+
     # Регистриуем роутеры в диспетчере
-    dp.include_router(admin_handlers.router)
     dp.include_router(user_handlers.router)
+    dp.include_router(pass_handlers.router)
+    dp.include_router(admin_handlers.router)
     dp.include_router(other_handlers.router)
+
+    pass_handlers.router.message.middleware(subscription_middleware)
+    pass_handlers.router.callback_query.middleware(subscription_middleware)
+    admin_handlers.router.message.middleware(admin_middleware)
+    admin_handlers.router.callback_query.middleware(admin_middleware)
+
     interval = 210
     threading.Thread(target=scheduled_messaging, args=(config.tg_bot.token, interval, config.db.db_host, config.db.database, config.db.db_user, config.db.db_password, config.db.db_port)).start()
     # Пропускаем накопившиеся апдейты и запускаем polling

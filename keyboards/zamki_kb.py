@@ -55,8 +55,8 @@ def create_tours_keyboard(game, status, tours):
     for tour in tours:
         kb_builder.row(
             InlineKeyboardButton(
-                text=tour[0],
-                callback_data=f"{dict[game]}_{status}_{tour[0][:9]}_tor"
+                text=tour,
+                callback_data=f"{dict[game]}_{status}_{tour[:9]}_tor"
                 # Counter-Strike.live.H2H CS.toar
             ))
     kb_builder.row(
@@ -74,8 +74,8 @@ def create_matches_keyboard(game, status, tour, matches):
     for match in matches:
         kb_builder.row(
             InlineKeyboardButton(
-                text=match[0],
-                callback_data=f"{dict[game]}_{status}_{tour[:9]}_{match[0]}_mch"
+                text=match,
+                callback_data=f"{dict[game]}_{status}_{tour[:9]}_{match}_mch"
                 # Counter-Strike.live.H2H CS.Dragon Riders | team2.mch
             ))
     kb_builder.row(
