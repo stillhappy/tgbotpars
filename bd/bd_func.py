@@ -19,7 +19,7 @@ def get_last_kofs(conn, match_info, dict_kofs_matches):
     cur = conn.cursor()
     query = "SELECT kofs, date_request FROM pars WHERE bk_name=%s AND game_name=%s AND tour_name=%s AND team1=%s AND team2=%s AND params=%s AND bet_name=%s AND status = 'line' ORDER BY date_request"
     cur.execute(query, (bk_name_i, game_name_i, tour_name_i, team1_i, team2_i, params_i, bet_name_i))
-    dict_kofs_matches[bk_name_i][game_name_i][f"{tour_name_i}_{team1_i}_{team2_i}_{params_i}_{bet_name_i}"]=dict_kofs_matches[bk_name_i][game_name_i].get(f"{tour_name_i}_{team1_i}_{team2_i}_{params_i}_{bet_name_i}", cur.fetchall())
+    dict_kofs_matches[bk_name_i][game_name_i][f"{tour_name_i}_{team1_i}_{team2_i}_{params_i}_{bet_name_i}"]=dict_kofs_matches[bk_name_i][game_name_i].get(f"{tour_name_i}_{team1_i.replace('_', '-')}_{team2_i.replace('_', '-')}_{params_i}_{bet_name_i}", cur.fetchall())
     cur.close()
 
 

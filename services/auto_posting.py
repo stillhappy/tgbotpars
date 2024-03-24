@@ -1,6 +1,7 @@
 import asyncio
 import time
 import os
+from aiogram.exceptions import TelegramForbiddenError
 from aiogram import Bot
 from aiogram.types import FSInputFile
 from bd.tg_users_bd import get_pass_users_with_settings
@@ -10,7 +11,7 @@ from services.del_papka import clear_folder
 import logging
 from datetime import datetime, timedelta
 
-async def send_message_with_photo(bot, user_ids, photo_path, list_pass_end):
+async def send_message_with_photo(bot, user_ids, photo_path, list_pass_end, logger):
     avoid_list = ['PGL Major Copenhagen']
     for user_id in user_ids:
         list_tags = photo_path.lstrip('photos\\').split('_')
@@ -19,7 +20,11 @@ async def send_message_with_photo(bot, user_ids, photo_path, list_pass_end):
                    f'Прогруз(<b>{list_tags[0][1:]}</b>):\n'
                    f'<b>{list_tags[-4].replace("-", " - ")}</b> ➡️ <b>{list_tags[-5].replace("-", " - ")}</b>')
         if list_tags[1].lower().replace(' ', '') in user_id[1] and list_tags[0][1:].lower() in user_id[2] and float(list_tags[2]) >= float(user_id[3]) and list_tags[-3].strip() not in avoid_list:
-            await bot.send_photo(chat_id=user_id[0], photo=FSInputFile(photo_path), caption=caption)
+            try:
+                await bot.send_photo(chat_id=user_id[0], photo=FSInputFile(photo_path), caption=caption)
+            except TelegramForbiddenError:
+                logger.exception(f"Bot is blocked by user {user_id[0]}")
+                continue
         if list_pass_end and user_id[0] in list_pass_end:
             await bot.send_message(chat_id=user_id[0], text='🚨<b>Сегодня у вас истекает подписка</b>🚨')
             if user_id[5]:
@@ -35,7 +40,7 @@ async def send_messages(bot, user_ids, photo_list, list_pass_end):
     logger.info('Выполнение рассылки')
     for photo_path in photo_list:
         logger.info(f"{photo_path}")
-        await send_message_with_photo(bot, user_ids, photo_path, list_pass_end)
+        await send_message_with_photo(bot, user_ids, photo_path, list_pass_end, logger)
         # f"photos/{bk}_{game}_{round(difference, 2)}_({coef1[-1]}-{coef2[-1]})_({coef1[-2]}-{coef2[-2]})_{tour_name}.png"
 
 def scheduled_messaging(bot_token, interval, db_host, db_database, db_user, db_password, db_port):
@@ -44,7 +49,7 @@ def scheduled_messaging(bot_token, interval, db_host, db_database, db_user, db_p
         bot = Bot(token=bot_token, parse_mode='HTML')
         user_ids = get_pass_users_with_settings(db_host, db_database, db_user, db_password, db_port)
         current_date = datetime.now() + timedelta(hours=3)
-        sr = datetime.strptime('2024-03-20 12:30:00', '%Y-%m-%d %H:%M:%S')
+        sr = datetime.strptime('2024-03-20 14:40:00', '%Y-%m-%d %H:%M:%S')
         sr2 = sr + timedelta(minutes=4)
         if current_date.hour == sr.hour and sr.minute <= current_date.minute <= sr2.minute:
             for user_id in user_ids:

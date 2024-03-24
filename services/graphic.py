@@ -1,5 +1,6 @@
 import plotly.graph_objects as go
 import json
+from services.watermarka import add_watermark_overlay
 from datetime import datetime, timedelta
 
 def plot_coefficients(data, match: str, bk: str, game: str, difference: float):
@@ -36,7 +37,7 @@ def plot_coefficients(data, match: str, bk: str, game: str, difference: float):
     fig.add_trace(trace2)
 
     fig.update_layout(
-        title=f"<b>{team1}-{team2}.{params}({bet_name})</b>",
+        title=f"<b>{team1} - {team2}. {params}: {bet_name}</b>",
         xaxis_title='<b>Время</b>',
         yaxis_title='<b>Коэффициенты</b>',
         showlegend=True,
@@ -48,6 +49,7 @@ def plot_coefficients(data, match: str, bk: str, game: str, difference: float):
     )
     file_name = f"photos/{bk.lower()}_{game.lower()}_{round(difference, 2)}_({coef1[-1]}-{coef2[-1]})_({coef1[-2]}-{coef2[-2]})_{tour_name}_{team1}_{team2}.png"
     fig.write_image(file_name)  # Сохранение графика в формате PNG
+    add_watermark_overlay(file_name, file_name, 'https://t.me/futurebets')
 
 def get_data_for_graph():
     with open('output.json', 'r') as file:
@@ -71,5 +73,10 @@ def get_data_for_graph():
                             plot_coefficients(data[bk][game][match], match, bk, game, difference)
 
 if __name__ == '__main__':
-    get_data_for_graph()
+    data = [['1.5 2.5', '03-23 2:20'], ['1.75 1.95', '03-23 2:40'], ['1.95 1.75', '03-23 2:50']]
+    match = 'blast_Infinity_Akatsuki_Общая_Исходы'
+    bk = 'fonbet'
+    game = 'counter-strike'
+    difference = 0.1
+    plot_coefficients(data, match, bk, game, difference)
 
