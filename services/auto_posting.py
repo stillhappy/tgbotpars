@@ -49,8 +49,8 @@ def scheduled_messaging(bot_token, interval, db_host, db_database, db_user, db_p
         bot = Bot(token=bot_token, parse_mode='HTML')
         user_ids = get_pass_users_with_settings(db_host, db_database, db_user, db_password, db_port)
         current_date = datetime.now() + timedelta(hours=3)
-        sr = datetime.strptime('2024-03-20 14:40:00', '%Y-%m-%d %H:%M:%S')
-        sr2 = sr + timedelta(minutes=4)
+        sr = datetime.strptime('2024-03-20 12:30:00', '%Y-%m-%d %H:%M:%S')
+        sr2 = sr + timedelta(minutes=5)
         if current_date.hour == sr.hour and sr.minute <= current_date.minute <= sr2.minute:
             for user_id in user_ids:
                 if user_id[4]:
