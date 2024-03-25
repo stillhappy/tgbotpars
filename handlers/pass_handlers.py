@@ -2,15 +2,17 @@ from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from lexicon.lexicon import LEXICON_RU
 from aiogram.filters import Command
+
 from keyboards.zamki_kb import create_locks_games_keyboard, create_tours_keyboard, create_matches_keyboard, create_params_keyboard, create_locks_all_keyboard, create_locks_keyboard
 from bd.tg_pass_bd import get_tours_from_game, get_matches_from_game, get_params_from_game, get_locks_all_from_game, get_full_name_tour
 from lexicon.dictsl import d_params_to_en, d_en_to_params, d_games_to_s, d_s_to_games
+
 
 router = Router()
 
 
 @router.message(Command(commands='locks'))
-async def send_locks_menu(message: Message, db_host, db_database, db_user, db_password, db_port):
+async def send_locks_menu(message: Message):
     await message.answer(
             text=LEXICON_RU[message.text],
             reply_markup=create_locks_keyboard()
@@ -77,7 +79,6 @@ async def matches_locks(callback: CallbackQuery, db_host, db_database, db_user, 
 async def process_back_to_tours(callback: CallbackQuery, db_host, db_database, db_user, db_password, db_port):
     data = callback.data.split('_')
     status, game, tour = data[2], data[1], data[3]
-    tour = await get_full_name_tour(tour, db_host, db_database, db_user, db_password, db_port)
     game = d_s_to_games[game]
     await callback.message.edit_text(
         text=f'<b>Вы перешли в игру {game}</b>\nВыберите турнир:',
