@@ -1,8 +1,7 @@
 import os
 import shutil
 
-def clear_folder():
-    folder_path = 'photos'
+def clear_folder(folder_path='photos'):
     for filename in os.listdir(folder_path):
         file_path = os.path.join(folder_path, filename)
         try:

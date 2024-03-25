@@ -13,7 +13,7 @@ def add_watermark_overlay(input_image_path, output_image_path, watermark_text):
         draw.line([(0, height - i), (i, height)], fill=watermark_color_pattern, width=5)
 
     font_size = 50
-    font = ImageFont.truetype('OpenSans-Regular.ttf', font_size)
+    font = ImageFont.truetype('arial.ttf', font_size)
 
     text_bbox = draw.textbbox((0, 0), watermark_text, font)
     text_width = text_bbox[2] - text_bbox[0]

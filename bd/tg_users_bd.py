@@ -1,5 +1,6 @@
 import logging
 import asyncpg
+import psycopg2
 from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
@@ -150,20 +151,20 @@ async def edit_params_pro(user_id, old_par: str, db_host, db_database, db_user, 
     finally:
         await conn.close()
 
-async def get_pass_users_with_settings(db_host, db_database, db_user, db_password, db_port):
-    conn = await asyncpg.connect(
+def get_pass_users_with_settings(db_host, db_database, db_user, db_password, db_port):
+    conn = psycopg2.connect(
         host=db_host,
         database=db_database,
         user=db_user,
         password=db_password,
         port=db_port
+
     )
-    try:
-        pass_users = await conn.fetch(
-            f"SELECT user_id, games, bookies, progruz, date_end_pass, username, first_name FROM tg_users WHERE is_pass is true")
-        return pass_users
-    except Exception as e:
-        logger.exception(f"Error in get_pass_users_with_settings: {e}")
-    finally:
-        await conn.close()
+    conn.autocommit = True
+    cur = conn.cursor()
+    cur.execute(f"SELECT user_id, games, bookies, progruz, date_end_pass, username, first_name FROM tg_users WHERE is_pass is true")
+    pass_users = cur.fetchall()
+    cur.close()
+    conn.close()
+    return pass_users
 

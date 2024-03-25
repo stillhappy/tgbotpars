@@ -1,4 +1,4 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from lexicon.lexicon import LEXICON_RU
 
@@ -15,7 +15,7 @@ def create_locks_keyboard():
         ),
         InlineKeyboardButton(
             text=LEXICON_RU['cancel'],
-            callback_data='cancel_zam'
+            callback_data='cancel_mat'
         ),
         width=1
     )

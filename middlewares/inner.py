@@ -26,6 +26,7 @@ class SubscriptionMiddleware(BaseMiddleware):
             return await handler(event, data)
         else:
             await event.answer(LEXICON_RU['/pass'][0])
+            logger.info(f'{user_id} не прошел в SubscriptionMiddleware')
             return
 
 class AdminMiddleware(BaseMiddleware):
@@ -46,4 +47,5 @@ class AdminMiddleware(BaseMiddleware):
             return await handler(event, data)
         else:
             await event.answer('У вас нет прав Администратора')
+            logger.info(f'{user_id} не прошел в AdminMiddleware')
             return

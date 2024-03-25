@@ -6,7 +6,7 @@ import time
 from aiogram import Bot, Dispatcher
 from config_data.config import Config, load_config
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler
-from handlers import user_handlers, pass_handlers, admin_handlers, other_handlers
+from handlers import user_handlers, pass_handlers, admin_handlers, other_handlers, parser_handlers
 from keyboards.main_menu import set_main_menu
 from services.auto_posting import scheduled_messaging
 from middlewares.inner import AdminMiddleware, SubscriptionMiddleware
@@ -46,11 +46,14 @@ async def main():
     # Регистриуем роутеры в диспетчере
     dp.include_router(user_handlers.router)
     dp.include_router(pass_handlers.router)
+    dp.include_router(parser_handlers.router)
     dp.include_router(admin_handlers.router)
     dp.include_router(other_handlers.router)
 
     pass_handlers.router.message.middleware(subscription_middleware)
     pass_handlers.router.callback_query.middleware(subscription_middleware)
+    parser_handlers.router.message.middleware(subscription_middleware)
+    parser_handlers.router.callback_query.middleware(subscription_middleware)
     admin_handlers.router.message.middleware(admin_middleware)
     admin_handlers.router.callback_query.middleware(admin_middleware)
 

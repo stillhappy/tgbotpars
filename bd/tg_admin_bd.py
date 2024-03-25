@@ -13,7 +13,7 @@ async def get_status_users(db_host, db_database, db_user, db_password, db_port):
         port=db_port
     )
     try:
-        pass_users = await conn.fetch(f"SELECT user_id, username, first_name, is_pass FROM tg_users ORDER BY is_pass, username")
+        pass_users = await conn.fetch(f"SELECT user_id, username, first_name, is_pass FROM tg_users ORDER BY is_pass, user_register_date, username")
         return pass_users
     except Exception as e:
         logger.exception(f"Error in get_status_users: {e}")
@@ -87,7 +87,7 @@ async def update_pass(db_host, db_database, db_user, db_password, db_port):
     )
     try:
         await conn.execute(
-            "UPDATE tg_users SET is_pass = false, date_start_pass = NULL, description = date_end_pass, date_end_pass = NULL WHERE date_end_pass <= NOW();")
+            "SET TIME ZONE 'Europe/Moscow'; UPDATE tg_users SET is_pass = false, date_start_pass = NULL, description = date_end_pass, date_end_pass = NULL WHERE date_end_pass <= NOW();")
     except Exception as e:
         logger.exception(f"Error in del_pass: {e}")
     finally:
